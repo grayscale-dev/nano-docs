@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Apryse WebViewer",
-  description: "Next.js + TailwindCSS Apryse WebViewer demo",
+  title: "Nano Docs",
+  description: "Nano Docs app",
 };
 
 export default function RootLayout({

@@ -7,14 +7,16 @@ type ApryseViewerProps = {
   documentToLoad?: {
     id: string;
     name: string;
-    file?: File;
+    file?: Blob;
     url?: string;
   };
+  onInstanceReady?: (instance: any) => void;
 };
 
 export default function ApryseViewer({
   licenseKey,
   documentToLoad,
+  onInstanceReady,
 }: ApryseViewerProps) {
   const viewerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<any>(null);
@@ -45,10 +47,17 @@ export default function ApryseViewer({
       }
       const { documentViewer } = instance.Core;
       onDocumentLoaded = () => {
+        instance.UI.setZoomLevel(1);
+        instance.UI.setActiveTabInPanel({
+          tabPanel: "leftPanel",
+          tabName: "thumbnailsPanel",
+        });
+        instance.UI.openElements(["leftPanel", "thumbnailsPanel"]);
         if (isActive) setIsReady(true);
       };
       documentViewer.addEventListener("documentLoaded", onDocumentLoaded);
       instanceRef.current = instance;
+      onInstanceReady?.(instance);
       setIsInitialized(true);
     }
 
