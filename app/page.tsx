@@ -1,6 +1,6 @@
 "use client";
 
-import { type ChangeEvent, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react";
 import ApryseViewer from "../components/ApryseViewer";
 import AppShell, { type DocRef, type ViewerSize } from "../components/AppShell";
 
@@ -11,7 +11,12 @@ const DEMO_DOC: DocRef = {
   isDefault: true,
 };
 
+const ACCESS_PASSWORD = "nanorox!";
+
 export default function HomePage() {
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [activeDocId, setActiveDocId] = useState(DEMO_DOC.id);
   const [docs, setDocs] = useState<DocRef[]>([DEMO_DOC]);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
@@ -27,11 +32,30 @@ export default function HomePage() {
   const canApproveDocument = Boolean(activeDocFromCurrent);
 
   useEffect(() => {
+    const stored = sessionStorage.getItem("nano-docs-auth");
+    if (stored === "true") {
+      setIsUnlocked(true);
+    }
+  }, []);
+
+  useEffect(() => {
     const hasActiveInCurrent = docs.some((doc) => doc.id === activeDocId);
     if (!hasActiveInCurrent) {
       setActiveDocId(docs[0]?.id ?? DEMO_DOC.id);
     }
   }, [docs, activeDocId]);
+
+  const handlePasswordSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    if (passwordInput === ACCESS_PASSWORD) {
+      sessionStorage.setItem("nano-docs-auth", "true");
+      setIsUnlocked(true);
+      setPasswordInput("");
+      setPasswordError(null);
+      return;
+    }
+    setPasswordError("Incorrect password.");
+  };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -90,6 +114,53 @@ export default function HomePage() {
       )
     );
   };
+
+  if (!isUnlocked) {
+    return (
+      <main className="min-h-screen bg-[#eef1f4] text-slate-900">
+        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-12">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Nano Docs
+            </div>
+            <h1 className="mt-2 text-lg font-semibold text-slate-900">
+              Enter Password
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              This demo is protected. Please enter the access password.
+            </p>
+            <form className="mt-5 space-y-3" onSubmit={handlePasswordSubmit}>
+              <label className="text-sm font-semibold text-slate-600">
+                Password
+                <input
+                  type="password"
+                  className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+                  value={passwordInput}
+                  onChange={(event) => {
+                    setPasswordInput(event.target.value);
+                    setPasswordError(null);
+                  }}
+                  placeholder="Enter password"
+                  autoFocus
+                />
+              </label>
+              {passwordError && (
+                <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600">
+                  {passwordError}
+                </div>
+              )}
+              <button
+                type="submit"
+                className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Unlock
+              </button>
+            </form>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <>
